@@ -20,9 +20,9 @@ class Balon(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.centerx = ANCHO / 2
         self.rect.centery = ALTO / 2
-        self.velocidad = [0.5, -0.5]
+        self.velocidad = [0.2, -0.2]
 
-    def actualizar(self, time, fich):#, pala_jug):
+    def actualizar(self, time, fichas1, fichas2):#, pala_jug):
         self.rect.centerx += self.velocidad[0] * time
         self.rect.centery += self.velocidad[1] * time
         if self.rect.left <= 39 or self.rect.right >= 761:
@@ -32,32 +32,101 @@ class Balon(pygame.sprite.Sprite):
             self.velocidad[1] = -self.velocidad[1]
             self.rect.centery += self.velocidad[1] * time
 
-        if pygame.sprite.collide_rect(self, fich):
-            self.velocidad[0] = -self.velocidad[0]
-            self.rect.centerx += self.velocidad[0] * time
+        for ficha in (fichas1.fichas + fichas2.fichas):
+            if pygame.sprite.collide_rect(self, ficha):
+                self.velocidad[0] = -self.velocidad[0]
+                self.rect.centerx += self.velocidad[0] * time
 
-class Fichas(pygame.sprite.Sprite):
-    def __init__(self):
+class Ficha(pygame.sprite.Sprite):
+    def __init__(self, img, pos, lim):
         pygame.sprite.Sprite.__init__(self)
-        self.image = load_image("ficha.jpg", True)
+        self.image = load_image(img)
         self.rect = self.image.get_rect()
-        self.rect.x = 100
-        self.rect.y = 259
+        self.rect.x = pos[0]
+        self.rect.y = pos[1]
+        self.limSup = lim[0]
+        self.limInf = lim[1]
+
+    def __str__(self):
+        return str(self.rect)
+
+class Fichas(object):
+    def __init__(self, img, jug=1):
+        # jug es el tipo de jugador
+        # 1 -> Jugador principal
+        # 2 -> Maquina
+        # 3 -> Jugador 2
         self.speed = 0.5
+        if jug == 1:
+            self.jug = 1
+            # Crear arreglo de los rects
+            self.fichas = [Ficha(img, (50, 259), (114, 414)),
+                          Ficha(img, (146, 173), (114, 240)),
+                          Ficha(img, (146, 347), (288, 414)),
+                          Ficha(img, (338, 135), (114, 158)),
+                          Ficha(img, (338, 222), (201, 245)),
+                          Ficha(img, (338, 306), (285, 329)),
+                          Ficha(img, (338, 391), (370, 414)),
+                          Ficha(img, (530, 163), (114, 211)),
+                          Ficha(img, (530, 262), (213, 310)),
+                          Ficha(img, (530, 366), (317, 414))
+                         ]
+        else:
+            self.jug = jug
+            # Crear arreglo de los rects
+            self.fichas = [Ficha(img, (727, 258), (114, 414)),
+                           Ficha(img, (631, 133), (114, 240)),
+                           Ficha(img, (631, 345), (288, 414)),
+                           Ficha(img, (432, 133), (114, 158)),
+                           Ficha(img, (432, 218), (201, 245)),
+                           Ficha(img, (432, 303), (285, 329)),
+                           Ficha(img, (432, 389), (370, 414)),
+                           Ficha(img, (241, 161), (114, 211)),
+                           Ficha(img, (241, 264), (213, 310)),
+                           Ficha(img, (241, 364), (317, 414))
+                         ]
 
     def mover(self, time, keys):
-        if self.rect.top > 114:
+        if self.jug == 1:
+            if keys[K_w]:
+                for ficha in self.fichas:
+                    top = ficha.limSup
+                    if ficha.rect.top > top:
+                        if ficha.rect.y - self.speed * time <= 114:
+                            ficha.rect.y = 114
+                        else:
+                            ficha.rect.y -= self.speed * time
+            if keys[K_s]:
+                for ficha in self.fichas:
+                    top = ficha.limInf
+                    if ficha.rect.top < top:
+                        if ficha.rect.y + self.speed * time >= 414:
+                            ficha.rect.y = 414
+                        else:
+                            ficha.rect.y += self.speed * time
+        elif self.jug == 2:
+            pass
+        elif self.jug == 3:
             if keys[K_UP]:
-                if self.rect.y - self.speed * time <= 114:
-                    self.rect.y = 114
-                else:
-                    self.rect.y -= self.speed * time
-        if self.rect.bottom < 439:
+                for ficha in self.fichas:
+                    top = ficha.limSup
+                    if ficha.rect.top > top:
+                        if ficha.rect.y - self.speed * time <= 114:
+                            ficha.rect.y = 114
+                        else:
+                            ficha.rect.y -= self.speed * time
             if keys[K_DOWN]:
-                if self.rect.y + self.speed * time >= 439:
-                    self.rect.bottom = 439
-                else:
-                    self.rect.y += self.speed * time
+                for ficha in self.fichas:
+                    top = ficha.limInf
+                    if ficha.rect.top < top:
+                        if ficha.rect.y + self.speed * time >= 414:
+                            ficha.rect.y = 414
+                        else:
+                            ficha.rect.y += self.speed * time
+
+    def pintar(self, screen):
+        for ficha in self.fichas:
+            screen.blit(ficha.image, ficha.rect)
 
 def load_image(filename, transparent=False):
         try: image = pygame.image.load(filename)
@@ -116,7 +185,8 @@ if __name__ == '__main__':
     pygame.mouse.set_visible(False)
     terminar = False
     bola = Balon()
-    fich = Fichas()
+    fichasA = Fichas("ficha.jpg")
+    fichasB = Fichas("ficha2.jpg", 3)
     clock = pygame.time.Clock()
 
     while not terminar:
@@ -125,10 +195,12 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminar = True
-        bola.actualizar(time, fich)#, pala_jug)
-        fich.mover(time, keys)
+        bola.actualizar(time, fichasA, fichasB)#, pala_jug)
+        fichasA.mover(time, keys)
+        fichasB.mover(time, keys)
 
         tablero.pintar()
         tablero.screen.blit(bola.image, bola.rect)
-        tablero.screen.blit(fich.image, fich.rect)
+        fichasA.pintar(tablero.screen)
+        fichasB.pintar(tablero.screen)
         pygame.display.flip()
