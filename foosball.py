@@ -20,7 +20,7 @@ class Balon(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.centerx = ANCHO / 2
         self.rect.centery = ALTO / 2
-        self.velocidad = [0.2, -0.2]
+        self.velocidad = [0.45, -0.3]
 
     def actualizar(self, time, fichas1, fichas2):#, pala_jug):
         self.rect.centerx += self.velocidad[0] * time
@@ -34,11 +34,14 @@ class Balon(pygame.sprite.Sprite):
 
         for ficha in (fichas1.fichas + fichas2.fichas):
             if pygame.sprite.collide_rect(self, ficha):
-                self.velocidad[0] = -self.velocidad[0]
+                if ficha.dir == "der":
+                    self.velocidad[0] = abs(self.velocidad[0])
+                if ficha.dir == "izq":
+                    self.velocidad[0] = -1*abs(self.velocidad[0])
                 self.rect.centerx += self.velocidad[0] * time
 
 class Ficha(pygame.sprite.Sprite):
-    def __init__(self, img, pos, lim):
+    def __init__(self, img, pos, lim, dirt):
         pygame.sprite.Sprite.__init__(self)
         self.image = load_image(img)
         self.rect = self.image.get_rect()
@@ -46,6 +49,7 @@ class Ficha(pygame.sprite.Sprite):
         self.rect.y = pos[1]
         self.limSup = lim[0]
         self.limInf = lim[1]
+        self.dir = dirt
 
     def __str__(self):
         return str(self.rect)
@@ -60,33 +64,33 @@ class Fichas(object):
         if jug == 1:
             self.jug = 1
             # Crear arreglo de los rects
-            self.fichas = [Ficha(img, (50, 259), (114, 414)),
-                          Ficha(img, (146, 173), (114, 240)),
-                          Ficha(img, (146, 347), (288, 414)),
-                          Ficha(img, (338, 135), (114, 158)),
-                          Ficha(img, (338, 222), (201, 245)),
-                          Ficha(img, (338, 306), (285, 329)),
-                          Ficha(img, (338, 391), (370, 414)),
-                          Ficha(img, (530, 163), (114, 211)),
-                          Ficha(img, (530, 262), (213, 310)),
-                          Ficha(img, (530, 366), (317, 414))
+            self.fichas = [Ficha(img, (50, 259), (197, 326), "der"),
+                          Ficha(img, (146, 173), (114, 240), "der"),
+                          Ficha(img, (146, 347), (288, 414), "der"),
+                          Ficha(img, (338, 135), (114, 158), "der"),
+                          Ficha(img, (338, 222), (201, 245), "der"),
+                          Ficha(img, (338, 306), (285, 329), "der"),
+                          Ficha(img, (338, 391), (370, 414), "der"),
+                          Ficha(img, (530, 163), (114, 211), "der"),
+                          Ficha(img, (530, 262), (213, 310), "der"),
+                          Ficha(img, (530, 366), (317, 414), "der")
                          ]
         else:
             self.jug = jug
             # Crear arreglo de los rects
-            self.fichas = [Ficha(img, (727, 258), (114, 414)),
-                           Ficha(img, (631, 133), (114, 240)),
-                           Ficha(img, (631, 345), (288, 414)),
-                           Ficha(img, (432, 133), (114, 158)),
-                           Ficha(img, (432, 218), (201, 245)),
-                           Ficha(img, (432, 303), (285, 329)),
-                           Ficha(img, (432, 389), (370, 414)),
-                           Ficha(img, (241, 161), (114, 211)),
-                           Ficha(img, (241, 264), (213, 310)),
-                           Ficha(img, (241, 364), (317, 414))
+            self.fichas = [Ficha(img, (727, 258), (197, 326), "izq"),
+                           Ficha(img, (631, 133), (114, 240), "izq"),
+                           Ficha(img, (631, 345), (288, 414), "izq"),
+                           Ficha(img, (432, 133), (114, 158), "izq"),
+                           Ficha(img, (432, 218), (201, 245), "izq"),
+                           Ficha(img, (432, 303), (285, 329), "izq"),
+                           Ficha(img, (432, 389), (370, 414), "izq"),
+                           Ficha(img, (241, 161), (114, 211), "izq"),
+                           Ficha(img, (241, 264), (213, 310), "izq"),
+                           Ficha(img, (241, 364), (317, 414), "izq")
                          ]
 
-    def mover(self, time, keys):
+    def mover(self, time, keys, bola=None):
         if self.jug == 1:
             if keys[K_w]:
                 for ficha in self.fichas:
@@ -105,7 +109,30 @@ class Fichas(object):
                         else:
                             ficha.rect.y += self.speed * time
         elif self.jug == 2:
-            pass
+            # Verifica que la bola este en un sector de la cancha
+            cond1 = bola.rect.x >=111 and bola.rect.x <= 251    # Delanteros
+            cond2 = bola.rect.x >= 402 and bola.rect.x <= 442   # Volantes
+            cond3 = bola.rect.x >= 601 and bola.rect.x <= 641   # Defensas
+            cond3 = bola.rect.x >= 687                          # Portero
+            if cond1 or cond2 or cond2 or cond3:
+                # Comprobar direccion
+                if bola.velocidad[1] > 0: # Hacia arriba
+                    for ficha in self.fichas:
+                        top = ficha.limSup
+                        if ficha.rect.top > top:
+                            if ficha.rect.y - self.speed * time <= 114:
+                                ficha.rect.y = 114
+                            else:
+                                ficha.rect.y -= self.speed * time
+                elif bola.velocidad[1] <= 0: # Hacia abajo
+                    for ficha in self.fichas:
+                        top = ficha.limInf
+                        if ficha.rect.top < top:
+                            if ficha.rect.y + self.speed * time >= 414:
+                                ficha.rect.y = 414
+                            else:
+                                ficha.rect.y += self.speed * time
+
         elif self.jug == 3:
             if keys[K_UP]:
                 for ficha in self.fichas:
@@ -186,7 +213,7 @@ if __name__ == '__main__':
     terminar = False
     bola = Balon()
     fichasA = Fichas("ficha.jpg")
-    fichasB = Fichas("ficha2.jpg", 3)
+    fichasB = Fichas("ficha2.jpg", 2)
     clock = pygame.time.Clock()
 
     while not terminar:
@@ -197,7 +224,10 @@ if __name__ == '__main__':
                 terminar = True
         bola.actualizar(time, fichasA, fichasB)#, pala_jug)
         fichasA.mover(time, keys)
-        fichasB.mover(time, keys)
+        if fichasB.jug == 2:
+            fichasB.mover(time, keys, bola)
+        elif fichasB.jug == 3:
+            fichasB.mover(time, keys)
 
         tablero.pintar()
         tablero.screen.blit(bola.image, bola.rect)
