@@ -47,6 +47,8 @@ class Balon(pygame.sprite.Sprite):
         if self.rect.x >= 21 and self.rect.x <= 39 and self.rect.y >= 198 and self.rect.y <= 352:
             marcador.resultado[1] = marcador.resultado[1] + 1
             marcador.gol = [True, 1]
+            sonido = pygame.mixer.Sound("sound/gol.ogg")
+            sonido.play()
             print("Gol")
             return -1
             #print("GOOOL")
@@ -54,6 +56,8 @@ class Balon(pygame.sprite.Sprite):
             if self.rect.x >= (761 - 22) and self.rect.x <= (776 - 20) and self.rect.y >= 198 and self.rect.y <= 352:
                 marcador.resultado[0] = marcador.resultado[0] + 1
                 marcador.gol = [True, 0]
+                sonido = pygame.mixer.Sound("sound/gol.ogg")
+                sonido.play()
                 print("Gol")
                 return -1
                 #print("GOOOL")
@@ -67,12 +71,15 @@ class Balon(pygame.sprite.Sprite):
 
         for ficha in (fichas1.fichas + fichas2.fichas):
             if pygame.sprite.collide_rect(self, ficha):
+
                 if ficha.dir == "der":
                     self.velocidad[0] = abs(self.velocidad[0])
                 if ficha.dir == "izq":
                     self.velocidad[0] = -1*abs(self.velocidad[0])
                 self.rect.centerx += self.velocidad[0] * time
                 ficha.bol = 1
+                sonido = pygame.mixer.Sound("sound/balon.ogg")
+                sonido.play()
                 if ficha in fichas1.fichas:
                     for fich in ficha.com:
                         fichas1.fichas[fich].bol = 1
@@ -473,7 +480,7 @@ def celebracion(screen, clock, marcador,tipo="gol"):
         screen.blit(goles_eq1, (225, 10))
         screen.blit(goles_eq2, (665, 390))
         pygame.display.flip()
-        clock.tick(0.4)
+        clock.tick(0.12)
 
     elif tipo == "victoria":
         # Analizar la informacion, extraer el equipo que hace el gol
@@ -521,7 +528,7 @@ def celebracion(screen, clock, marcador,tipo="gol"):
         screen.blit(goles_eq1, (225, 10))
         screen.blit(goles_eq2, (665, 390))
         pygame.display.flip()
-        clock.tick(0.4)
+        clock.tick(0.12)
 
 
 
@@ -541,7 +548,11 @@ def juego(equipoA, equipoB, marcador):
     fichasB = Fichas(equipoB, imgB, 2)
 
     clock = pygame.time.Clock()
-
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load("sound/estadio.ogg")
+    pygame.mixer.music.play()
+    sonido = pygame.mixer.Sound("sound/pitido.ogg")
+    sonido.play()
     while not terminar:
         time = clock.tick(60)
         keys = pygame.key.get_pressed()
@@ -551,11 +562,17 @@ def juego(equipoA, equipoB, marcador):
 
         bola.actualizar(time, fichasA, fichasB, marcador)#, pala_jug)
         if marcador.gol[0] and len(marcador.gol) > 0:
-            if marcador.resultado[0] >= 2:
+            if marcador.resultado[0] >= 7:
+                sonido = pygame.mixer.Sound("sound/pitido.ogg")
+                sonido.play()
+                pygame.mixer.music.stop()
                 # Gano el jugado1:
                 celebracion(tablero.screen, clock, marcador, "victoria")
                 return equipoA
-            elif marcador.resultado[1] >= 2:
+            elif marcador.resultado[1] >= 7:
+                sonido = pygame.mixer.Sound("sound/pitido.ogg")
+                sonido.play()
+                pygame.mixer.music.stop()
                 celebracion(tablero.screen, clock, marcador, "victoria")
                 return equipoB
             else:
@@ -647,6 +664,8 @@ def select_equipo(torneo):
             select_mode()
             return -1
         if keys[K_RETURN]:
+            sonido = pygame.mixer.Sound("sound/pitido.ogg")
+            sonido.play()
             equipo = posiciones[pos[0]][pos[1]]
             equipo = equipos[juntas.index(equipo)]
             llave = [equipo]
@@ -891,6 +910,8 @@ def copa(torneo):
 
 def select_mode():
     screen = pygame.display.set_mode([ANCHO,ALTO])
+    pygame.mixer.music.load("sound/fondo.ogg")
+    pygame.mixer.music.play(1)
     terminar = False
     clock = pygame.time.Clock()
 
@@ -911,15 +932,16 @@ def select_mode():
                 marco.x = 40
         if keys[K_ESCAPE]:
             terminar = True
+            break
         if keys[K_RETURN]:
+            sonido = pygame.mixer.Sound("sound/pitido.ogg")
+            sonido.play()
             if marco.x == 40:
                 copa("america")
                 terminar = True
-                break
             elif marco.x == 400:
                 copa("aguila")
                 terminar = True
-                break
 
         # FONDO DE PANTALLA
         fondo = pygame.image.load("img/modos/fondo.jpg")
