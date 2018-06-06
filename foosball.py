@@ -39,17 +39,23 @@ class Balon(pygame.sprite.Sprite):
                 if ficha.dir == "izq":
                     self.velocidad[0] = -1*abs(self.velocidad[0])
                 self.rect.centerx += self.velocidad[0] * time
+                ficha.bol = 1
+            else:
+                ficha.bol = 0
 
 class Ficha(pygame.sprite.Sprite):
     def __init__(self, img, pos, lim, dirt):
         pygame.sprite.Sprite.__init__(self)
-        self.image = load_image(img)
-        self.rect = self.image.get_rect()
+        self.image = [load_image(img[0]),
+                      load_image(img[1]),
+                      load_image(img[2])]
+        self.rect = self.image[0].get_rect()
         self.rect.x = pos[0]
         self.rect.y = pos[1]
         self.limSup = lim[0]
         self.limInf = lim[1]
         self.dir = dirt
+        self.bol = 0
 
     def __str__(self):
         return str(self.rect)
@@ -151,9 +157,13 @@ class Fichas(object):
                         else:
                             ficha.rect.y += self.speed * time
 
-    def pintar(self, screen):
+    def pintar(self, screen, clock):
         for ficha in self.fichas:
-            screen.blit(ficha.image, ficha.rect)
+            screen.blit(ficha.image[ficha.bol], ficha.rect)
+            if ficha.bol == 1:
+                ficha.bol = 2
+            elif ficha.bol == 2:
+                ficha.bol = 0
 
 def load_image(filename, transparent=False):
         try: image = pygame.image.load(filename)
@@ -212,8 +222,14 @@ if __name__ == '__main__':
     pygame.mouse.set_visible(False)
     terminar = False
     bola = Balon()
-    fichasA = Fichas("ficha.jpg")
-    fichasB = Fichas("ficha2.jpg", 2)
+    imgA = ["img/standard/11.png",
+            "img/standard/12.png",
+            "img/standard/13.png"]
+    imgB = ["img/standard/21.png",
+            "img/standard/22.png",
+            "img/standard/23.png"]
+    fichasA = Fichas(imgA)
+    fichasB = Fichas(imgB, 2)
     clock = pygame.time.Clock()
 
     while not terminar:
@@ -223,7 +239,7 @@ if __name__ == '__main__':
             if event.type == pygame.QUIT:
                 terminar = True
         bola.actualizar(time, fichasA, fichasB)#, pala_jug)
-        fichasA.mover(time, keys)
+        fichasA.mover(time, keys, bola)
         if fichasB.jug == 2:
             fichasB.mover(time, keys, bola)
         elif fichasB.jug == 3:
@@ -231,6 +247,7 @@ if __name__ == '__main__':
 
         tablero.pintar()
         tablero.screen.blit(bola.image, bola.rect)
-        fichasA.pintar(tablero.screen)
-        fichasB.pintar(tablero.screen)
+        fichasA.pintar(tablero.screen, clock)
+        fichasB.pintar(tablero.screen, clock)
+        clock.tick(50)
         pygame.display.flip()
