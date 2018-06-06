@@ -347,11 +347,30 @@ class Marcador(object):
 
     def pintar(self, screen):
         fuente = pygame.font.Font(None, 50)
+        # Renderizar fuentes con el resultado parcial
         jugador1 = fuente.render(str(self.resultado[0]), 0, NEGRO)
         jugador2 = fuente.render(str(self.resultado[1]), 0, NEGRO)
+        # Mostrar sprite del marcador
         screen.blit(self.marcador_sprite, self.marcador_rect)
+        # Escribir el marcador parcial
         screen.blit(jugador1, (360, 31))
         screen.blit(jugador2, (425, 31))
+        # Visualizar los logos de los equipos en la parte inferior:
+        # Cargar escudo del equipo
+        equipoA, equipoB = self.jugadores[0], self.jugadores[1]
+
+        imageA = pygame.image.load("img/equipos" + tipo_equipo(equipoA) + equipoA + ".png")
+        imageA = pygame.transform.scale(imageA, (50, 50))
+        rectA = imageA.get_rect()
+        rectA.x, rectA.y = 0, 530
+        # Cargar escudo del contrario:
+        imageB = pygame.image.load("img/equipos" + tipo_equipo(equipoB) + equipoB + ".png")
+        imageB = pygame.transform.scale(imageB, (50,50))
+        rectB = imageB.get_rect()
+        rectB.right, rectB.y = 800, 530
+
+        screen.blit(imageA, rectA)
+        screen.blit(imageB, rectB)
 
     def __str__(self):
         return "[" + str(self.resultado[0]) + " , " + str(self.resultado[1]) + "]"
