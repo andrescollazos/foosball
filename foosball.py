@@ -13,6 +13,21 @@ GRIS = (162, 162, 162)
 VERDE1 = (8, 71, 10)
 VERDE2 = (14, 132, 18)
 VERDE = [VERDE1, VERDE2]
+pygame.init()
+
+equipos = {
+            "clubes": ["nacional", "dim", "santafe", "america", "millonarios", "cali", "junior", "tolima",
+                       "cali", "bucaramanga", "huila", "caldas", "pasto", "boyaca", "aguilas", "patriotas",
+                       "enviagado", "cortulua", "jaguares"],
+            "selecciones": ["colombia", "brasil", "argentina", "uruguay", "paraguay", "venezuela", "chile", "ecuador", "bolivia", "peru"]
+          }
+
+# Devuelve el tipo de equipo
+def tipo_equipo(equipo):
+    if equipo in equipos["clubes"]:
+        return "/clubes/"
+    if equipo in equipos["selecciones"]:
+        return "/selecciones/"
 
 class Balon(pygame.sprite.Sprite):
     def __init__(self):
@@ -23,10 +38,27 @@ class Balon(pygame.sprite.Sprite):
         self.rect.centery = ALTO / 2
         self.velocidad = [0.45, -0.3]
 
-    def actualizar(self, time, fichas1, fichas2):#, pala_jug):
+    def actualizar(self, time, fichas1, fichas2, marcador):
         self.rect.centerx += self.velocidad[0] * time
         self.rect.centery += self.velocidad[1] * time
-        if self.rect.left <= 39 or self.rect.right >= 761:
+
+        # Verificar si anota gol
+        # Equipo 1
+        if self.rect.x >= 21 and self.rect.x <= 39 and self.rect.y >= 198 and self.rect.y <= 352:
+            marcador.resultado[1] = marcador.resultado[1] + 1
+            marcador.gol = [True, 1]
+            print("Gol")
+            return -1
+            #print("GOOOL")
+        else:
+            if self.rect.x >= (761 - 22) and self.rect.x <= (776 - 20) and self.rect.y >= 198 and self.rect.y <= 352:
+                marcador.resultado[0] = marcador.resultado[0] + 1
+                marcador.gol = [True, 0]
+                print("Gol")
+                return -1
+                #print("GOOOL")
+
+        if self.rect.left <= 38 or self.rect.right >= 761:
             self.velocidad[0] = -self.velocidad[0]
             self.rect.centerx += self.velocidad[0] * time
         if self.rect.top <= 114 or self.rect.bottom >= 442:
@@ -67,7 +99,8 @@ class Ficha(pygame.sprite.Sprite):
         return str(self.rect)
 
 class Fichas(object):
-    def __init__(self, img, jug=1):
+    def __init__(self, equipo, img, jug=1):
+        self.equipo = equipo
         # jug es el tipo de jugador
         # 1 -> Jugador principal
         # 2 -> Maquina
@@ -303,8 +336,25 @@ class Fichas(object):
                 pygame.draw.rect(screen, GRIS, rect)
 
 class Marcador(object):
-    def __init__(self):
-        pass
+    def __init__(self, jugadores, img):
+        self.marcador_sprite = load_image(img, True)
+        self.marcador_rect = self.marcador_sprite.get_rect()
+        self.marcador_rect.centerx = ANCHO/2
+        self.marcador_rect.y = 6
+        self.jugadores = jugadores
+        self.resultado = [0, 0]
+        self.gol = [False, False]
+
+    def pintar(self, screen):
+        fuente = pygame.font.Font(None, 50)
+        jugador1 = fuente.render(str(self.resultado[0]), 0, NEGRO)
+        jugador2 = fuente.render(str(self.resultado[1]), 0, NEGRO)
+        screen.blit(self.marcador_sprite, self.marcador_rect)
+        screen.blit(jugador1, (360, 31))
+        screen.blit(jugador2, (425, 31))
+
+    def __str__(self):
+        return "[" + str(self.resultado[0]) + " , " + str(self.resultado[1]) + "]"
 
 def load_image(filename, transparent=False):
         try: image = pygame.image.load(filename)
@@ -356,21 +406,77 @@ class Tablero(object):
         pygame.draw.circle(self.screen, (255, 255, 255), (400, 275), 87, 2)
         pygame.draw.circle(self.screen, (255, 255, 255), (400, 275), 7)
 
+def celebracion(screen, clock, marcador,tipo="gol"):
+    if tipo == "gol":
+        # Analizar la informacion, extraer el equipo que hace el gol
+        equipo = marcador.jugadores[marcador.gol[1]] # Cargar nombre
+        # El que recibe el gol esta en la otra posicion
+        if marcador.gol[1]:
+            res_e = 0
+        else:
+            res_e = 1
+        contrario = marcador.jugadores[res_e] # Cargar nombre
+
+        # Cargar imagen de celebracion de gol del equipo
+        imagen_eq = pygame.image.load("img/celebraciones/goles/" + equipo  + ".jpg")
+        imagen_eq = pygame.transform.scale(imagen_eq, (800, 600))
+        rect = imagen_eq.get_rect()
+        rect.x, rect.y = 0, 0
+
+        # Cargar imagen generica: ¡goooooool!
+        image_gol = pygame.image.load("img/celebraciones/gol.png")
+        rect_gol = image_gol.get_rect()
+        rect_gol.x, rect_gol.y = 0, 0
+
+        # Cargar escudo del equipo
+        image_esc = pygame.image.load("img/equipos" + tipo_equipo(equipo) + equipo + ".png")
+        image_esc = pygame.transform.scale(image_esc, (200, 200))
+        rect_esc = image_esc.get_rect()
+        rect_esc.x, rect_esc.y = 20, 10
+        # Cargar escudo del contrario:
+        image_cont = pygame.image.load("img/equipos" + tipo_equipo(contrario) + contrario + ".png")
+        image_cont = pygame.transform.scale(image_cont, (100,100))
+        rect_cont = image_cont.get_rect()
+        rect_cont.x, rect_cont.y = 700, 350
+
+
+        # Generar resultado en pantalla
+        fuente_e1 = pygame.font.Font(None, 300)
+        fuente_e2 = pygame.font.Font(None, 60)
+        goles_eq1 = fuente_e1.render(str(marcador.resultado[marcador.gol[1]]), 0, BLANCO)
+        goles_eq2 = fuente_e2.render(str(marcador.resultado[res_e]), 0, BLANCO)
+
+
+        screen.blit(imagen_eq, rect)
+        screen.blit(image_gol, rect_gol)
+        screen.blit(image_esc, rect_esc)
+        screen.blit(image_cont, rect_cont)
+        screen.blit(goles_eq1, (225, 10))
+        screen.blit(goles_eq2, (665, 390))
+        pygame.display.flip()
+        clock.tick(0.15)
+
+    elif tipo == "victoria":
+        pass
+
 if __name__ == '__main__':
-    pygame.init()
     tablero = Tablero()
     # Mouse invisible
     pygame.mouse.set_visible(False)
     terminar = False
     bola = Balon()
-    imgA = ["img/jugador/11.png",
-            "img/jugador/12.png",
-            "img/jugador/13.png"]
-    imgB = ["img/jugador/21.png",
-            "img/jugador/22.png",
-            "img/jugador/23.png"]
-    fichasA = Fichas(imgA)
-    fichasB = Fichas(imgB, 2)
+    equipoA = "nacional"
+    equipoB = "brasil"
+    imgA = ["img/jugador" + tipo_equipo(equipoA) + equipoA +"/11.png",
+            "img/jugador" + tipo_equipo(equipoA) + equipoA +"/12.png",
+            "img/jugador" + tipo_equipo(equipoA) + equipoA +"/13.png"]
+    imgB = ["img/jugador" + tipo_equipo(equipoB) + equipoB +"/21.png",
+            "img/jugador" + tipo_equipo(equipoB) + equipoB +"/22.png",
+            "img/jugador" + tipo_equipo(equipoB) + equipoB +"/23.png"]
+    fichasA = Fichas(equipoA, imgA)
+    fichasB = Fichas(equipoB, imgB, 2)
+    marcador = Marcador([equipoA, equipoB], "img/marcador.png")
+
     clock = pygame.time.Clock()
 
     while not terminar:
@@ -379,7 +485,10 @@ if __name__ == '__main__':
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminar = True
-        bola.actualizar(time, fichasA, fichasB)#, pala_jug)
+        bola.actualizar(time, fichasA, fichasB, marcador)#, pala_jug)
+        if marcador.gol[0] and len(marcador.gol) > 0:
+            celebracion(tablero.screen, clock, marcador)
+
         fichasA.mover(time, keys, bola)
         if fichasB.jug == 2:
             fichasB.mover(time, keys, bola)
@@ -388,6 +497,7 @@ if __name__ == '__main__':
 
         tablero.pintar()
         tablero.screen.blit(bola.image, bola.rect)
+        marcador.pintar(tablero.screen)
         fichasA.pintar(tablero.screen, clock)
         fichasB.pintar(tablero.screen, clock)
         clock.tick(50)
