@@ -9,6 +9,7 @@ ANCHO = 800
 ALTO = 600
 NEGRO = (0, 0, 0)
 BLANCO = (255, 255, 255)
+GRIS = (162, 162, 162)
 VERDE1 = (8, 71, 10)
 VERDE2 = (14, 132, 18)
 VERDE = [VERDE1, VERDE2]
@@ -16,7 +17,7 @@ VERDE = [VERDE1, VERDE2]
 class Balon(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = load_image("balon.png", True)
+        self.image = load_image("img/balon.png", True)
         self.rect = self.image.get_rect()
         self.rect.centerx = ANCHO / 2
         self.rect.centery = ALTO / 2
@@ -72,53 +73,163 @@ class Fichas(object):
         # 2 -> Maquina
         # 3 -> Jugador 2
         self.speed = 0.5
+        self.acts = []
         if jug == 1:
             self.jug = 1
             # Crear arreglo de los rects
-            self.fichas = [Ficha(img, (50, 259), (197, 326), "der"),
+            self.fichas = [
+                          Ficha(img, (50, 259), (197, 326), "der"),
                           Ficha(img, (146, 173), (114, 240), "der", [2]),
                           Ficha(img, (146, 347), (288, 414), "der", [1]),
                           Ficha(img, (338, 135), (114, 158), "der", [4, 5, 6]),
                           Ficha(img, (338, 222), (201, 245), "der", [3, 5, 6]),
                           Ficha(img, (338, 306), (285, 329), "der", [3, 4, 6]),
                           Ficha(img, (338, 391), (370, 414), "der", [3, 4, 5]),
-                          Ficha(img, (530, 163), (114, 211), "der", [7, 8]),
-                          Ficha(img, (530, 262), (213, 310), "der", [6, 8]),
-                          Ficha(img, (530, 366), (317, 414), "der", [6, 7])
+                          Ficha(img, (530, 163), (114, 211), "der", [8, 9]),
+                          Ficha(img, (530, 262), (213, 310), "der", [7, 9]),
+                          Ficha(img, (530, 366), (317, 414), "der", [7, 8])
                          ]
+            self.barras = [ [
+                             [54, 18, 10, 67, 0],
+                             [54, 114, 10, 145, 1],
+                             [54, 287, 10, 155, 2],
+                             [54, 482, 10, 62, 3]
+                            ],
+                            [
+                             [150, 18, 10, 67, 0],
+                             [150, 114, 10, 59, 1],
+                             [150, 201, 10, 146, 4],
+                             [150, 375, 10, 67, 2],
+                             [150, 482, 10, 59, 3]
+                            ],
+                            [
+                             [342, 62, 10, 23, 0],
+                             [342, 114, 10, 21, 1],
+                             [342, 163, 10, 59, 4],
+                             [342, 250, 10, 56, 4],
+                             [342, 334, 10, 57, 4],
+                             [342, 419, 10, 23, 2],
+                             [342, 482, 10, 21, 3]
+                            ],
+                            [
+                             [534, 37, 10, 48, 0],
+                             [534, 114, 10, 49, 1],
+                             [534, 191, 10, 71, 4],
+                             [534, 290, 10, 71, 4],
+                             [534, 394, 10, 48, 2],
+                             [534, 482, 10, 49, 3]
+                            ]
+            ]
         else:
             self.jug = jug
             # Crear arreglo de los rects
             self.fichas = [Ficha(img, (727, 258), (197, 326), "izq"),
-                           Ficha(img, (631, 133), (114, 240), "izq", [2]),
-                           Ficha(img, (631, 345), (288, 414), "izq", [1]),
-                           Ficha(img, (432, 133), (114, 158), "izq", [4, 5, 6]),
-                           Ficha(img, (432, 218), (201, 245), "izq", [3, 5, 6]),
-                           Ficha(img, (432, 303), (285, 329), "izq", [3, 4, 6]),
-                           Ficha(img, (432, 389), (370, 414), "izq", [3, 4, 5]),
-                           Ficha(img, (241, 161), (114, 211), "izq", [7, 8]),
-                           Ficha(img, (241, 264), (213, 310), "izq", [6, 8]),
-                           Ficha(img, (241, 364), (317, 414), "izq", [6, 7])
+                           Ficha(img, (631, 173), (114, 240), "izq", [2]),
+                           Ficha(img, (631, 347), (288, 414), "izq", [1]),
+                           Ficha(img, (432, 135), (114, 158), "izq", [4, 5, 6]),
+                           Ficha(img, (432, 222), (201, 245), "izq", [3, 5, 6]),
+                           Ficha(img, (432, 306), (285, 329), "izq", [3, 4, 6]),
+                           Ficha(img, (432, 391), (370, 414), "izq", [3, 4, 5]),
+                           Ficha(img, (241, 163), (114, 211), "izq", [8, 9]),
+                           Ficha(img, (241, 262), (213, 310), "izq", [7, 9]),
+                           Ficha(img, (241, 366), (317, 414), "izq", [8, 7])
                          ]
+            self.barras = [ [
+                             [731, 18, 10, 67, 0],
+                             [731, 114, 10, 145, 1],
+                             [731, 287, 10, 155, 2],
+                             [731, 482, 10, 62, 3]
+                            ],
+                            [
+                             [635, 18, 10, 67, 0],
+                             [635, 114, 10, 59, 1],
+                             [635, 201, 10, 146, 4],
+                             [635, 375, 10, 67, 2],
+                             [635, 482, 10, 59, 3]
+                            ],
+                            [
+                             [436, 62, 10, 23, 0],
+                             [436, 114, 10, 21, 1],
+                             [436, 163, 10, 59, 4],
+                             [436, 250, 10, 56, 4],
+                             [436, 334, 10, 57, 4],
+                             [436, 419, 10, 23, 2],
+                             [436, 482, 10, 21, 3]
+                            ],
+                            [
+                             [245, 37, 10, 48, 0],
+                             [245, 114, 10, 49, 1],
+                             [245, 191, 10, 71, 4],
+                             [245, 290, 10, 71, 4],
+                             [245, 394, 10, 48, 2],
+                             [245, 482, 10, 49, 3]
+                            ]
+            ]
+
+    def convert(self, num):
+        if num >= 0 and num < 1:
+            return 0
+        elif num >= 1 and num < 3:
+            return 1
+        elif num >= 3 and num < 7:
+            return 2
+        elif num >= 7 and num < 10:
+            return 3
+
+    def mover_barras(self, pos, ficha):
+        # Cargar informacion de fichas compañeras
+        fichs = [ficha]
+        for fich in ficha.com:
+            fichs.append(self.fichas[fich])
+        try:
+            linea = self.barras[pos]
+        except:
+            linea = []
+        for i, barra in enumerate(linea):
+            if barra[0] - 4 == ficha.rect.x:
+                if barra[4] == 0:
+                    barra[3] = fichs[len(fichs)-1].limInf - fichs[len(fichs)-1].rect.y
+                    barra[1] = 85 - barra[3]
+                elif barra[4] == 1:
+                    barra[3] = fichs[0].rect.y - 114
+                elif barra[4] == 2:
+                    barra[3] = 442 - (fichs[len(fichs)-1].rect.y + 28)
+                    barra[1] = fichs[len(fichs)-1].rect.y + 28
+                elif barra[4] == 3:
+                    barra[3] = fichs[0].rect.y - fichs[0].limSup
+                elif barra[4] == 4:
+                    barra[1] = linea[i-1][1] + linea[i-1][3] + 28
 
     def mover(self, time, keys, bola=None):
         if self.jug == 1:
             if keys[K_w]:
-                for ficha in self.fichas:
+                xa = 0
+                for i, ficha in enumerate(self.fichas):
                     top = ficha.limSup
                     if ficha.rect.top > top:
                         if ficha.rect.y - self.speed * time <= 114:
                             ficha.rect.y = 114
                         else:
                             ficha.rect.y -= self.speed * time
+                        if not (ficha.rect.x in self.acts):
+                            self.acts.append(ficha.rect.x)
+                            self.mover_barras(self.convert(i), ficha)
+                self.acts = []
+
             if keys[K_s]:
-                for ficha in self.fichas:
+                xa = 0
+                for i, ficha in enumerate(self.fichas):
                     top = ficha.limInf
                     if ficha.rect.top < top:
                         if ficha.rect.y + self.speed * time >= 414:
                             ficha.rect.y = 414
                         else:
                             ficha.rect.y += self.speed * time
+                        if not(ficha.rect.x in self.acts):
+                            self.acts.append(ficha.rect.x)
+                            self.mover_barras(self.convert(i), ficha)
+                self.acts = []
+
         elif self.jug == 2:
             # Verifica que la bola este en un sector de la cancha
             cond1 = bola.rect.x >=111 and bola.rect.x <= 251    # Delanteros
@@ -128,39 +239,54 @@ class Fichas(object):
             if cond1 or cond2 or cond2 or cond3:
                 # Comprobar direccion
                 if bola.velocidad[1] > 0: # Hacia arriba
-                    for ficha in self.fichas:
+                    for i, ficha in enumerate(self.fichas):
                         top = ficha.limSup
                         if ficha.rect.top > top:
                             if ficha.rect.y - self.speed * time <= 114:
                                 ficha.rect.y = 114
                             else:
                                 ficha.rect.y -= self.speed * time
+                            if not(ficha.rect.x in self.acts):
+                                self.acts.append(ficha.rect.x)
+                                self.mover_barras(self.convert(i), ficha)
+                    self.acts = []
                 elif bola.velocidad[1] <= 0: # Hacia abajo
-                    for ficha in self.fichas:
+                    for i, ficha in enumerate(self.fichas):
                         top = ficha.limInf
                         if ficha.rect.top < top:
                             if ficha.rect.y + self.speed * time >= 414:
                                 ficha.rect.y = 414
                             else:
                                 ficha.rect.y += self.speed * time
-
+                            if not(ficha.rect.x in self.acts):
+                                self.acts.append(ficha.rect.x)
+                                self.mover_barras(self.convert(i), ficha)
+                    self.acts = []
         elif self.jug == 3:
             if keys[K_UP]:
-                for ficha in self.fichas:
+                for i, ficha in enumerate(self.fichas):
                     top = ficha.limSup
                     if ficha.rect.top > top:
                         if ficha.rect.y - self.speed * time <= 114:
                             ficha.rect.y = 114
                         else:
                             ficha.rect.y -= self.speed * time
+                        if not(ficha.rect.x in self.acts):
+                            self.acts.append(ficha.rect.x)
+                            self.mover_barras(self.convert(i), ficha)
+                self.acts = []
             if keys[K_DOWN]:
-                for ficha in self.fichas:
+                for i, ficha in enumerate(self.fichas):
                     top = ficha.limInf
                     if ficha.rect.top < top:
                         if ficha.rect.y + self.speed * time >= 414:
                             ficha.rect.y = 414
                         else:
                             ficha.rect.y += self.speed * time
+                        if not(ficha.rect.x in self.acts):
+                            self.acts.append(ficha.rect.x)
+                            self.mover_barras(self.convert(i), ficha)
+                self.acts = []
 
     def pintar(self, screen, clock):
         for ficha in self.fichas:
@@ -169,6 +295,12 @@ class Fichas(object):
                 ficha.bol = 2
             elif ficha.bol == 2:
                 ficha.bol = 0
+
+        for linea in self.barras:
+            rect = 0
+            for barra in linea:
+                rect = Rect(barra[0], barra[1], barra[2], barra[3])
+                pygame.draw.rect(screen, GRIS, rect)
 
 class Marcador(object):
     def __init__(self):
