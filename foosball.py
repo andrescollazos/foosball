@@ -15,18 +15,18 @@ VERDE2 = (14, 132, 18)
 VERDE = [VERDE1, VERDE2]
 pygame.init()
 
-equipos = {
+EQUIPOS = {
             "clubes": ["nacional", "dim", "santafe", "america", "millonarios", "cali", "junior", "tolima",
                        "cali", "bucaramanga", "huila", "caldas", "pasto", "boyaca", "aguilas", "patriotas",
-                       "enviagado", "cortulua", "jaguares"],
+                       "envigado", "cortulua", "jaguares", "random"],
             "selecciones": ["colombia", "brasil", "argentina", "uruguay", "paraguay", "venezuela", "chile", "ecuador", "bolivia", "peru"]
           }
 
 # Devuelve el tipo de equipo
 def tipo_equipo(equipo):
-    if equipo in equipos["clubes"]:
+    if equipo in EQUIPOS["clubes"]:
         return "/clubes/"
-    if equipo in equipos["selecciones"]:
+    if equipo in EQUIPOS["selecciones"]:
         return "/selecciones/"
 
 class Balon(pygame.sprite.Sprite):
@@ -399,7 +399,7 @@ class Tablero(object):
         pygame.draw.rect(self.screen, (125, 73, 33), (0, 0, self.W, self.H))
 
         # BORDES EXTERNOS DE LA MESA
-        c = pygame.draw.rect(self.screen, (89, 87, 87), (0, 74, self.W, 29))
+        pygame.draw.rect(self.screen, (89, 87, 87), (0, 74, self.W, 29))
         pygame.draw.rect(self.screen, (89, 87, 87), (0,103, 21, 350))
         pygame.draw.rect(self.screen, (89, 87, 87), (0,453, self.W, 30))
         pygame.draw.rect(self.screen, (89, 87, 87), (779,103, 21, 350))
@@ -478,7 +478,7 @@ def celebracion(screen, clock, marcador,tipo="gol"):
     elif tipo == "victoria":
         pass
 
-if __name__ == '__main__':
+def main():
     tablero = Tablero()
     # Mouse invisible
     pygame.mouse.set_visible(False)
@@ -521,3 +521,139 @@ if __name__ == '__main__':
         fichasB.pintar(tablero.screen, clock)
         clock.tick(50)
         pygame.display.flip()
+
+def select_equipo(torneo):
+    if torneo == "america":
+        tipo_eq = "selecciones"
+        equipos = EQUIPOS[tipo_eq]
+        tam = (140, 140)
+        posiciones = [
+            [(10, 155), (170, 155), (330, 155), (490, 155), (650, 155)],
+            [(10, 405), (170, 405), (330, 405), (490, 405), (650, 405)],
+        ]
+
+    elif torneo == "aguila":
+        tipo_eq = "clubes"
+        equipos = EQUIPOS[tipo_eq]
+        tam = (100, 100)
+        # Posiciones para los equipos
+        posiciones = [
+                    [(30, 112), (190, 112), (350, 112), (510, 112), (670, 112)],
+                    [(30, 237), (190, 237), (350, 237), (510, 237), (670, 237)],
+                    [(30, 362), (190, 362), (350, 362), (510, 362), (670, 362)],
+                    [(30, 487), (190, 487), (350, 487), (510, 487), (670, 487)],
+                ]
+    juntas = []
+    for posicion in posiciones:
+        juntas += posicion
+    # Cargar todos los escudos de los equipos
+    rects = []
+    for i, eq in enumerate(equipos):
+        image = pygame.image.load("img/equipos/" + tipo_eq + "/" + eq + ".png")
+        image = pygame.transform.scale(image, tam)
+        rect_i = image.get_rect()
+        rect_i.x, rect_i.y = juntas[i][0], juntas[i][1]
+        rects.append([image, rect_i])
+
+    screen = pygame.display.set_mode([ANCHO,ALTO])
+
+    terminar = False
+    clock = pygame.time.Clock()
+    pos =[0, 0]
+    marco = pygame.Rect(posiciones[pos[0]][pos[0]], tam)
+    pygame.draw.rect(screen, (155, 0, 0), marco, 2)
+
+    # FONDO DE PANTALLA
+    fondo = pygame.image.load("img/modos/fondo2.jpg")
+    rect_fondo = fondo.get_rect()
+    rect_fondo.x, rect_fondo.y = 0, 0
+
+    while not terminar:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminar = True
+        keys = pygame.key.get_pressed()
+
+        if keys[K_RIGHT]:
+            if pos[1] < 4:
+                pos[1] += 1
+        if keys[K_LEFT]:
+            if pos[1] > 0:
+                pos[1] -= 1
+        if keys[K_UP]:
+            if pos[0] > 0:
+                pos[0] -= 1
+        if keys[K_DOWN]:
+            if pos[0] < len(posiciones)-1:
+                pos[0] += 1
+        if keys[K_ESCAPE]:
+            terminar = True
+            select_mode()
+            return -1
+        if keys[K_RETURN]:
+            pass
+
+        screen.blit(fondo, rect_fondo)
+        for i, rect in enumerate(rects):
+            screen.blit(rect[0], rect[1])
+        marco = pygame.Rect(posiciones[pos[0]][pos[1]], tam)
+        pygame.draw.rect(screen, (155, 0, 0), marco, 4)
+        pygame.display.flip()
+        clock.tick(20)
+def copa(torneo):
+    select_equipo(torneo)
+
+def select_mode():
+    screen = pygame.display.set_mode([ANCHO,ALTO])
+    terminar = False
+    clock = pygame.time.Clock()
+
+    marco = pygame.Rect((40, 140), (328, 391))
+    pygame.draw.rect(screen, (155, 0, 0), marco, 2)
+
+    while not terminar:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminar = True
+        keys = pygame.key.get_pressed()
+
+        if keys[K_RIGHT]:
+            if marco.x == 40:
+                marco.x = 400
+        if keys[K_LEFT]:
+            if marco.x == 400:
+                marco.x = 40
+        if keys[K_ESCAPE]:
+            terminar = True
+        if keys[K_RETURN]:
+            if marco.x == 40:
+                copa("america")
+                terminar = True
+                return -1
+            elif marco.x == 400:
+                copa("aguila")
+                terminar = True
+                return -1
+
+        # FONDO DE PANTALLA
+        fondo = pygame.image.load("img/modos/fondo.jpg")
+        rect_fondo = fondo.get_rect()
+        rect_fondo.x, rect_fondo.y = 0, 0
+
+        # CARGAR COPA AMERICA 2019
+        america = pygame.image.load("img/torneos/america.png")
+        rect_ame = america.get_rect()
+        rect_ame.x, rect_ame.y = 40, 140
+
+        # CARGAR LIGA AGUILA
+        aguila = pygame.image.load("img/torneos/aguila.png")
+        rect_ag = aguila.get_rect()
+        rect_ag.x, rect_ag.y = 400, 140
+
+        screen.blit(fondo, rect_fondo)
+        screen.blit(america, rect_ame)
+        screen.blit(aguila, rect_ag)
+        pygame.draw.rect(screen, (155, 0, 0), marco, 4)
+        pygame.display.flip()
+
+select_mode()
