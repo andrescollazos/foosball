@@ -329,11 +329,11 @@ class Fichas(object):
             elif ficha.bol == 2:
                 ficha.bol = 0
 
-        for linea in self.barras:
-            rect = 0
-            for barra in linea:
-                rect = Rect(barra[0], barra[1], barra[2], barra[3])
-                pygame.draw.rect(screen, GRIS, rect)
+        #for linea in self.barras:
+        #    rect = 0
+        #    for barra in linea:
+        #        rect = Rect(barra[0], barra[1], barra[2], barra[3])
+        #        pygame.draw.rect(screen, GRIS, rect)
 
 class Marcador(object):
     def __init__(self, jugadores, img):
@@ -473,19 +473,64 @@ def celebracion(screen, clock, marcador,tipo="gol"):
         screen.blit(goles_eq1, (225, 10))
         screen.blit(goles_eq2, (665, 390))
         pygame.display.flip()
-        clock.tick(0.15)
+        clock.tick(0.4)
 
     elif tipo == "victoria":
-        pass
+        # Analizar la informacion, extraer el equipo que hace el gol
+        equipo = marcador.jugadores[marcador.gol[1]] # Cargar nombre
+        # El que recibe el gol esta en la otra posicion
+        if marcador.gol[1]:
+            res_e = 0
+        else:
+            res_e = 1
+        contrario = marcador.jugadores[res_e] # Cargar nombre
 
-def main():
+        # Cargar imagen de celebracion de victoria del equipo
+        imagen_eq = pygame.image.load("img/celebraciones/victoria/" + equipo  + ".jpg")
+        imagen_eq = pygame.transform.scale(imagen_eq, (800, 600))
+        rect = imagen_eq.get_rect()
+        rect.x, rect.y = 0, 0
+
+        # Cargar imagen generica: ¡ganador!
+        image_gol = pygame.image.load("img/celebraciones/victoria.png")
+        rect_gol = image_gol.get_rect()
+        rect_gol.x, rect_gol.y = 0, 0
+
+        # Cargar escudo del equipo
+        image_esc = pygame.image.load("img/equipos" + tipo_equipo(equipo) + equipo + ".png")
+        image_esc = pygame.transform.scale(image_esc, (200, 200))
+        rect_esc = image_esc.get_rect()
+        rect_esc.x, rect_esc.y = 20, 10
+        # Cargar escudo del contrario:
+        image_cont = pygame.image.load("img/equipos" + tipo_equipo(contrario) + contrario + ".png")
+        image_cont = pygame.transform.scale(image_cont, (100,100))
+        rect_cont = image_cont.get_rect()
+        rect_cont.x, rect_cont.y = 700, 350
+
+        # Generar resultado en pantalla
+        fuente_e1 = pygame.font.Font(None, 300)
+        fuente_e2 = pygame.font.Font(None, 60)
+        goles_eq1 = fuente_e1.render(str(marcador.resultado[marcador.gol[1]]), 0, BLANCO)
+        goles_eq2 = fuente_e2.render(str(marcador.resultado[res_e]), 0, BLANCO)
+
+
+        screen.blit(imagen_eq, rect)
+        screen.blit(image_gol, rect_gol)
+        screen.blit(image_esc, rect_esc)
+        screen.blit(image_cont, rect_cont)
+        screen.blit(goles_eq1, (225, 10))
+        screen.blit(goles_eq2, (665, 390))
+        pygame.display.flip()
+        clock.tick(0.4)
+
+
+
+def juego(equipoA, equipoB, marcador):
     tablero = Tablero()
     # Mouse invisible
     pygame.mouse.set_visible(False)
     terminar = False
     bola = Balon()
-    equipoA = "nacional"
-    equipoB = "brasil"
     imgA = ["img/jugador" + tipo_equipo(equipoA) + equipoA +"/11.png",
             "img/jugador" + tipo_equipo(equipoA) + equipoA +"/12.png",
             "img/jugador" + tipo_equipo(equipoA) + equipoA +"/13.png"]
@@ -494,7 +539,6 @@ def main():
             "img/jugador" + tipo_equipo(equipoB) + equipoB +"/23.png"]
     fichasA = Fichas(equipoA, imgA)
     fichasB = Fichas(equipoB, imgB, 2)
-    marcador = Marcador([equipoA, equipoB], "img/marcador.png")
 
     clock = pygame.time.Clock()
 
@@ -504,9 +548,21 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminar = True
+
         bola.actualizar(time, fichasA, fichasB, marcador)#, pala_jug)
         if marcador.gol[0] and len(marcador.gol) > 0:
-            celebracion(tablero.screen, clock, marcador)
+            if marcador.resultado[0] >= 2:
+                # Gano el jugado1:
+                celebracion(tablero.screen, clock, marcador, "victoria")
+                return equipoA
+            elif marcador.resultado[1] >= 2:
+                celebracion(tablero.screen, clock, marcador, "victoria")
+                return equipoB
+            else:
+                celebracion(tablero.screen, clock, marcador)
+                marcador.gol = [False, False]
+                return juego(equipoA, equipoB, marcador)
+                terminar = True
 
         fichasA.mover(time, keys, bola)
         if fichasB.jug == 2:
@@ -553,7 +609,7 @@ def select_equipo(torneo):
         image = pygame.transform.scale(image, tam)
         rect_i = image.get_rect()
         rect_i.x, rect_i.y = juntas[i][0], juntas[i][1]
-        rects.append([image, rect_i])
+        rects.append([image, rect_i, eq, juntas[i]])
 
     screen = pygame.display.set_mode([ANCHO,ALTO])
 
@@ -591,7 +647,17 @@ def select_equipo(torneo):
             select_mode()
             return -1
         if keys[K_RETURN]:
-            pass
+            equipo = posiciones[pos[0]][pos[1]]
+            equipo = equipos[juntas.index(equipo)]
+            llave = [equipo]
+            i = 0
+            while i < 7:
+                rand = equipos[random.randrange(len(equipos))]
+                if not(rand in llave) and not(rand == "random"):
+                    llave.append(rand)
+                    i += 1
+            terminar = True
+            return llave
 
         screen.blit(fondo, rect_fondo)
         for i, rect in enumerate(rects):
@@ -600,8 +666,228 @@ def select_equipo(torneo):
         pygame.draw.rect(screen, (155, 0, 0), marco, 4)
         pygame.display.flip()
         clock.tick(20)
+
+
 def copa(torneo):
-    select_equipo(torneo)
+    # FONDO DE PANTALLA
+    fondo = pygame.image.load("img/modos/diagrama-"+ torneo +".jpg")
+    rect_fondo = fondo.get_rect()
+    rect_fondo.x, rect_fondo.y = 0, 0
+
+    equipos = select_equipo(torneo)
+    equipo = equipos[0]
+
+    if torneo == "aguila":
+        tipo_eq = "clubes"
+    elif torneo == "america":
+        tipo_eq = "selecciones"
+
+    # Posiciones de cuartos de final en el diagrama
+    pos_cuartos = [
+                    [(31, 204), (126, 204)],
+                    [(21, 415), (126, 415)],
+                    [(605,204), (702, 204)],
+                    [(605,415), (702, 415)]
+                  ]
+    # Posiciones de semifinales en el diagrama
+    pos_semis = [
+                    [(223,267), (223,355)],
+                    [(508,267), (508,355)]
+                ]
+
+    # Posiciones de finales en el diagrama
+    pos_final = [(319,311), (413,311)]
+
+    # Posicion del campeon
+    pos_ganador = (361,403)
+
+    # ------------------------------------------------------------------------#
+    # CUARTOS DE FINAL
+    print("CUARTOS DE FINAL DE ", torneo)
+    for i, equip in enumerate(equipos):
+        print i, ". ", equip
+    cuart_eq = equipos
+    enfrentamientos = []
+    for i in range(4):
+        jug1 = cuart_eq[random.randrange(len(equipos))]
+        cuart_eq.remove(jug1)
+        jug2 = cuart_eq[random.randrange(len(equipos))]
+        cuart_eq.remove(jug2)
+
+        image1 = pygame.image.load("img/equipos/" + tipo_eq + "/" + jug1 + ".png")
+        image1 = pygame.transform.scale(image1, (47, 47))
+        rect_1 = image1.get_rect()
+        rect_1.x, rect_1.y = pos_cuartos[i][0]
+
+        image2 = pygame.image.load("img/equipos/" + tipo_eq + "/" + jug2 + ".png")
+        image2 = pygame.transform.scale(image2, (47, 47))
+        rect_2 = image2.get_rect()
+        rect_2.x, rect_2.y = pos_cuartos[i][1]
+        if equipo == jug2:
+            enfrentamientos.append([[image2, rect_2, jug2], [image1, rect_1, jug1]])
+        else:
+            enfrentamientos.append([[image1, rect_1, jug1], [image2, rect_2, jug2]])
+
+    # HACER DIAGRAMA:
+    screen = pygame.display.set_mode([ANCHO,ALTO])
+    clock = pygame.time.Clock()
+
+    screen.blit(fondo, rect_fondo)
+    for enfrentamiento in enfrentamientos:
+        screen.blit(enfrentamiento[0][0], enfrentamiento[0][1])
+        screen.blit(enfrentamiento[1][0], enfrentamiento[1][1])
+    pygame.display.flip()
+    clock.tick(0.1)
+
+    # ENFRENTAMIENTOS:
+    n_equipos = []
+    for rival in enfrentamientos:
+        # En caso de que sea un partido que no le corresponde al jugador
+        if equipo == rival[0][2]:
+            marcador = Marcador([rival[0][2], rival[1][2]], "img/marcador.png")
+            n_equipos.append(juego(rival[0][2], rival[1][2], marcador))
+
+        else:
+            n_equipos.append(rival[random.randrange(2)][2])
+
+    # SEMIFINALES ------------------------------------------------------------#
+    print("PASARON A SEMIFINAL: ")
+    for i, e in enumerate(n_equipos):
+        print i, ". ", e
+
+    image1 = pygame.image.load("img/equipos/" + tipo_eq + "/" + n_equipos[0] + ".png")
+    image1 = pygame.transform.scale(image1, (47, 47))
+    rect_1 = image1.get_rect()
+    rect_1.x, rect_1.y = pos_semis[0][0]
+
+    image2 = pygame.image.load("img/equipos/" + tipo_eq + "/" + n_equipos[1] + ".png")
+    image2 = pygame.transform.scale(image2, (47, 47))
+    rect_2 = image2.get_rect()
+    rect_2.x, rect_2.y = pos_semis[0][1]
+
+    image3 = pygame.image.load("img/equipos/" + tipo_eq + "/" + n_equipos[2] + ".png")
+    image3 = pygame.transform.scale(image3, (47, 47))
+    rect_3 = image3.get_rect()
+    rect_3.x, rect_3.y = pos_semis[1][0]
+
+    image4 = pygame.image.load("img/equipos/" + tipo_eq + "/" + n_equipos[3] + ".png")
+    image4 = pygame.transform.scale(image4, (47, 47))
+    rect_4 = image4.get_rect()
+    rect_4.x, rect_4.y = pos_semis[1][1]
+
+    enfrentamientos_s = [
+        [[image1, rect_1, n_equipos[0]], [image2, rect_2, n_equipos[1]]],
+        [[image3, rect_3, n_equipos[2]], [image4, rect_4, n_equipos[3]]],
+    ]
+
+    # HACER DIAGRAMA:
+    screen = pygame.display.set_mode([ANCHO,ALTO])
+    clock = pygame.time.Clock()
+
+    screen.blit(fondo, rect_fondo)
+    for enfrentamiento in enfrentamientos + enfrentamientos_s:
+        screen.blit(enfrentamiento[0][0], enfrentamiento[0][1])
+        screen.blit(enfrentamiento[1][0], enfrentamiento[1][1])
+    pygame.display.flip()
+    clock.tick(0.1)
+
+    # ENFRENTAMIENTOS
+    equipos_f = []
+    for rival in enfrentamientos_s:
+        # En caso de que sea un partido que no le corresponde al jugador
+        if equipo == rival[0][2]:
+            marcador = Marcador([equipo, rival[1][2]], "img/marcador.png")
+            equipos_f.append(juego(equipo, rival[1][2], marcador))
+        elif equipo == rival[1][2]:
+            marcador = Marcador([equipo, rival[0][2]], "img/marcador.png")
+            equipos_f.append(juego(equipo, rival[0][2], marcador))
+        else:
+            equipos_f.append(rival[random.randrange(2)][2])
+
+    # FINALES -----------------------------------------------
+    print("PASARON A FINAL: ")
+    for i, e in enumerate(equipos_f):
+        print i, ". ", e
+
+    image1 = pygame.image.load("img/equipos/" + tipo_eq + "/" + equipos_f[0] + ".png")
+    image1 = pygame.transform.scale(image1, (47, 47))
+    rect_1 = image1.get_rect()
+    rect_1.x, rect_1.y = pos_final[0]
+
+    image2 = pygame.image.load("img/equipos/" + tipo_eq + "/" + equipos_f[1] + ".png")
+    image2 = pygame.transform.scale(image2, (47, 47))
+    rect_2 = image2.get_rect()
+    rect_2.x, rect_2.y = pos_final[1]
+
+    enfrentamiento_f = [[[image1, rect_1, equipos_f[0]], [image2, rect_2, equipos_f[1]]]]
+
+    # HACER DIAGRAMA
+    screen = pygame.display.set_mode([ANCHO,ALTO])
+    clock = pygame.time.Clock()
+
+    screen.blit(fondo, rect_fondo)
+    for enfrentamiento in enfrentamientos + enfrentamientos_s + enfrentamiento_f:
+        screen.blit(enfrentamiento[0][0], enfrentamiento[0][1])
+        screen.blit(enfrentamiento[1][0], enfrentamiento[1][1])
+    pygame.display.flip()
+    clock.tick(0.1)
+
+    # ENFRENTAMIENTO
+    ganador = []
+    for rival in enfrentamiento_f:
+        # En caso de que sea un partido que no le corresponde al jugador
+        if equipo == rival[0][2]:
+            marcador = Marcador([equipo, rival[1][2]], "img/marcador.png")
+            ganador.append(juego(equipo, rival[1][2], marcador))
+        elif equipo == rival[1][2]:
+            marcador = Marcador([equipo, rival[0][2]], "img/marcador.png")
+            ganador.append(juego(equipo, rival[0][2], marcador))
+        else:
+            ganador.append(rival[random.randrange(2)][2])
+
+    #  GANADOOOOOOR ------------------------------------------------------------
+    print("CAMPEON DEL TORNEO")
+    print ganador[0]
+
+    image1 = pygame.image.load("img/equipos/" + tipo_eq + "/" + ganador[0] + ".png")
+    image1 = pygame.transform.scale(image1, (47, 47))
+    rect_1 = image1.get_rect()
+    rect_1.x, rect_1.y = pos_ganador
+
+    campeon = [[[image1, rect_1, ganador[0]], [image1, rect_1, ganador[0]]]]
+
+    # HACER DIAGRAMA
+    screen = pygame.display.set_mode([ANCHO,ALTO])
+    clock = pygame.time.Clock()
+    screen.blit(fondo, rect_fondo)
+    for enfrentamiento in enfrentamientos + enfrentamientos_s + enfrentamiento_f + campeon:
+        screen.blit(enfrentamiento[0][0], enfrentamiento[0][1])
+        screen.blit(enfrentamiento[1][0], enfrentamiento[1][1])
+    pygame.display.flip()
+    clock.tick(0.1)
+
+    # Cargar imagen de celebracion de victoria del equipo
+    imagen_eq = pygame.image.load("img/celebraciones/victoria/" + ganador[0]  + ".jpg")
+    imagen_eq = pygame.transform.scale(imagen_eq, (800, 600))
+    rect = imagen_eq.get_rect()
+    rect.x, rect.y = 0, 0
+
+    # Cargar imagen generica: ¡ganador!
+    image_gol = pygame.image.load("img/celebraciones/campeon-" + torneo + ".png")
+    rect_gol = image_gol.get_rect()
+    rect_gol.x, rect_gol.y = 0, 0
+
+    # Cargar escudo del equipo
+    image_esc = pygame.image.load("img/equipos" + tipo_equipo(ganador[0]) + ganador[0] + ".png")
+    image_esc = pygame.transform.scale(image_esc, (200, 200))
+    rect_esc = image_esc.get_rect()
+    rect_esc.x, rect_esc.y = 20, 10
+
+    screen.blit(imagen_eq, rect)
+    screen.blit(image_gol, rect_gol)
+    screen.blit(image_esc, rect_esc)
+    pygame.display.flip()
+    clock.tick(0.4)
 
 def select_mode():
     screen = pygame.display.set_mode([ANCHO,ALTO])
@@ -629,11 +915,11 @@ def select_mode():
             if marco.x == 40:
                 copa("america")
                 terminar = True
-                return -1
+                break
             elif marco.x == 400:
                 copa("aguila")
                 terminar = True
-                return -1
+                break
 
         # FONDO DE PANTALLA
         fondo = pygame.image.load("img/modos/fondo.jpg")
